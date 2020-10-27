@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-kubedata 
+  
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: "" 
+  volumeName: pv-nfs-kubedata  # < Name of the persistent volume created earlier
+  resources:
+    requests:
+      storage: 1Gi
