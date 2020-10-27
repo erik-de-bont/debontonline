@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pvc-nfs-kubedata-static
+  name: pvc-nfs-kubedata-nginx-1
   namespace: default
 spec:
   storageClassName: ""
-  volumeName: pv-nfs-kubedata # < The storage class name needs correpond with the persistent volume
+  volumeName: pv-nfs-kubedata-nginx-1 # < The volumename needs correpond with the persistent volume
   accessModes:
    - ReadWriteOnce 
   resources:

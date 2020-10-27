@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: pv-nfs-kubedata  # < Name of the persistent volume
+  name: pv-nfs-kubedata-nginx-1  # < Name of the persistent volume
   namespace: default    
 spec:
   storageClassName: ""
   capacity:
-    storage: 500Gi # < Maximum storage size you want to reserve
+    storage: 1Gi # < Maximum storage size you want to reserve
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
@@ -15,5 +15,5 @@ spec:
     - nfsvers=4.1
   nfs:
     server: xxx.xxx.xxx.xxx  # < The ip adress of your NAS (NFS Server)
-    path: "/volume1/kubedata"  # < The NFS volumename 
+    path: "/volume1/kubedata/nginx-1"  # < The NFS volumename 
     readOnly: false
