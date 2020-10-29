@@ -1,0 +1,13 @@
+apiVersion: cert-manager.io/v1alpha2
+kind: Certificate
+metadata:
+  name: nginx-1-mydomain-com
+  namespace: default
+spec:
+  secretName: nginx-1-mydomain-com-tls
+  issuerRef:
+    name: letsencrypt-staging
+    kind: ClusterIssuer
+  commonName: nginx-1.mydomain.com
+  dnsNames:
+  - nginx-1.mydomain.com

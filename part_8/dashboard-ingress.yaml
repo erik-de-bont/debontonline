@@ -1,0 +1,22 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name:  kubernetes-dashboard
+  namespace: kubernetes-dashboard
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  rules:
+  - host: k8s-dashboard.mydomain.com # < change this domain to your own
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: kubernetes-dashboard
+          servicePort: 443
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - k8s-dashboard.mydomain.com
+    secretName: k8s-dashboard-mydomain-com-tls # < cert-manager will store the created certificate in this secret.

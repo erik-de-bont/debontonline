@@ -1,0 +1,11 @@
+#Download Velero
+wget https://github.com/vmware-tanzu/velero/releases/download/v1.5.1/velero-v1.5.1-linux-arm64.tar.gz
+
+# Unpack Velero
+tar zxf velero-v1.5.1-linux-arm64.tar.gz
+
+# Move velero to /usr/local/bin directory
+sudo mv velero-v1.5.1-linux-arm64/velero /usr/local/bin 
+
+#remove tar and sources
+rm -rf velero* 

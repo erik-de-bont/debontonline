@@ -1,0 +1,8 @@
+velero install \
+   --use-restic \
+   --provider aws \
+   --plugins velero/velero-plugin-for-aws-arm:main \
+   --bucket backup-k8s \ 
+   --secret-file ./minio.credentials \
+   --use-volume-snapshots=false \
+   --backup-location-config region=minio,s3ForcePathStyle=true,s3Url=https://xxx.xxx.xxx.xxx:9000 
