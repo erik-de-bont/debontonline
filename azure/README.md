@@ -1,2 +1,2 @@
 # blog
-Files from https://www.debontonline.com
+Files from https://www.debontonline.com/p/azure.html
