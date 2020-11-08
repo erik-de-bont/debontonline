@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-1
+  labels:
+    app: nginx-1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-1
+  template:
+    metadata:
+      labels:
+        app: nginx-1
+    spec:
+      volumes:
+      - name: nginx-1-volume
+        persistentVolumeClaim:
+          claimName: pvc-nfs-kubedata-nginx-1
+      containers:
+        - image: nginx
+          name: nginx-1
+          imagePullPolicy: Always
+          resources:
+           limits:
+             memory: 512Mi
+             cpu: "1"
+           requests:
+             memory: 256Mi
+             cpu: "0.2"
+          volumeMounts:
+          - name: nginx-1-volume
+            mountPath: /usr/share/nginx/html
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nginx-1-service
+spec:
+  selector:
+    app: nginx-1
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 80 
+  type: LoadBalancer
+---

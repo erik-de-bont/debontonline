@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-nfs-kubedata-nginx-1
+  annotations:
+   volume.beta.kubernetes.io/storage-class: "managed-nfs-storage"  # <  the dynamic nfs storage call we have created earlier
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 1Mi
