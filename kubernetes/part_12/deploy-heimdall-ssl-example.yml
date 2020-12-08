@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: heimdall
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: heimdall-pv-nfs   # < name of the persisant volume ("pv") in kubenetes
+  namespace: heimdall     # < namespace where place the pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Gi          # < max. size we reserve for the pv
+  accessModes:
+    - ReadWriteOnce       # < Only one pod can write to storage 
+  persistentVolumeReclaimPolicy: Retain   # < The persistant volume can reclaimed 
+  mountOptions:           # < Mount options specific for nfs 4.1, remove if version < 4.1 nfs server is used
+    - hard
+    - nfsvers=4.1
+  nfs:
+    server: xxx.xxx.xxx.xxx         # < IP number of your NFS server
+    path: "/volume1/kubedata/heimdall" # < Name of your NFS share with subfolder
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: heimdall-pvc        # < name of the persistant volume claim ("pvc'")
+  namespace: heimdall       # < namespace where place the pvc
+
+spec:
+  storageClassName: "" 
+  volumeName: heimdall-pv-nfs # < the pv it will "claim" to storage. Created in the previous yaml.
+  accessModes:
+    - ReadWriteOnce         # < Only one pod can write to storage. Same value as pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi          # < How much data can the pvc claim from pv
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heimdall        # < name of the deployment
+  namespace: heimdall   # < namespace where place the deployment and pods
+  labels:
+    app: heimdall       # < label for tagging and reference
+spec:
+  replicas: 1           # < number of pods to deploy
+  selector:
+    matchLabels:
+      app: heimdall
+  strategy:
+    rollingUpdate:
+      maxSurge: 0       # < The number of pods that can be created above the desired amount of pods during an update
+      maxUnavailable: 1 # < The number of pods that can be unavailable during the update process
+    type: RollingUpdate # < New pods are added gradually, and old pods are terminated gradually
+  template:
+    metadata:
+      labels:
+        app: heimdall
+    spec:
+      volumes:
+      - name: nfs-heimdall  # < linkname of the volume for the pvc
+        persistentVolumeClaim:
+          claimName: heimdall-pvc # < pvc name we created in the previous yaml
+      - name: heimdall-ssl
+        secret:
+          secretName: heimdall-mydomain-tls # < the name ssl certificate, will be created in the ingress yaml
+      containers:
+      - image: ghcr.io/linuxserver/heimdall # < the name of the docker image we will use
+        name: heimdall                      # < name of container
+        imagePullPolicy: Always             # < always use the latest image when creating container/pod
+        env:                                # < the environment variables required (see container documentation)
+        - name: PGID
+          value: "100" # < group "user"
+        - name: PUID
+          value: "1041" # < user "docker"
+        - name: TZ
+          value: Europe/Amsterdam
+        ports:                              # < the ports required (see container documentation)
+         - containerPort: 80
+           name: http-80
+           protocol: TCP
+         - containerPort: 443
+           name: https-443
+           protocol: TCP
+        volumeMounts:                       # < the volume mount in the container. Look at the relation volumelabel->pvc->pv
+         - mountPath: /config               # < mount location in the container
+           name: nfs-heimdall               # < volumelabel configured earlier in the yaml file
+           subPath: config                  # < subfolder in the nfs share to be mounted
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: heimdall-service    # < name of the service
+  namespace: heimdall       # < namespace where place the deployment and pods
+spec:
+  selector:
+    app: heimdall           # < reference to the deployment (connects with this deployment)
+  ports:
+    - name: http-80
+      protocol: TCP
+      port: 80
+    - name: https-443
+      protocol: TCP
+      port: 443
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: heimdall-ingress   # < name of ingress entry
+  namespace: heimdall      # < namespace where place the deployment and pods
+  annotations:
+    kubernetes.io/ingress.class: "nginx"   # < use the nginx ingress controller
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # < communicate with the backend (service/pod) via HTTPS
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # < use letsencrypt-prod application in kubernetes to generate ssl certificate
+spec:
+  rules:
+  - host: heimdall.mydomain.com  # < hostname to access the heimdall
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: heimdall-service # < connect the ingress entry to service created earlier
+          servicePort: 443
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - heimdall.mydomain.com  # < hostname to access the heimdall
+    secretName: heimdall-mydomain-tls # < cert-manager will store the created certificate in this secret.
