@@ -13,7 +13,7 @@ spec:
   capacity:
     storage: 1Gi          # < max. size we reserve for the pv
   accessModes:
-    - ReadWriteOnce       # < Only one pod can write to storage 
+    - ReadWriteMany       # < Multiple pods can write to storage 
   persistentVolumeReclaimPolicy: Retain   # < The persistant volume can reclaimed 
   mountOptions:           # < Mount options specific for nfs 4.1, remove if version < 4.1 nfs server is used
     - hard
@@ -33,7 +33,7 @@ spec:
   storageClassName: "" 
   volumeName: heimdall-pv-nfs # < the pv it will "claim" to storage. Created in the previous yaml.
   accessModes:
-    - ReadWriteOnce         # < Only one pod can write to storage. Same value as pv
+    - ReadWriteMany           # < Multiple pods can write to storage.  Same value as pv
   volumeMode: Filesystem
   resources:
     requests:
