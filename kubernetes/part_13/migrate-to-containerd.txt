@@ -1,0 +1,112 @@
+#Get nodes
+kubectl get nodes
+
+# A. Replacing the docker engine on a worker node
+
+#Step 1 - Put worker node into drain mode 
+kubectl drain <<node>>  --ignore-daemonsets --delete-emptydir-data
+
+#Step 2 - Stop kubernetes on worker node
+sudo systemctl stop kubelet
+
+#Step 3 - Remove docker
+sudo apt remove docker-ce docker-ce-cli
+sudo apt autoremove
+
+#Step 4 -Install containerd prerequites
+cat <<EOF | sudo tee /etc/modules-load.d/containerd.conf
+overlay
+br_netfilter
+EOF
+
+#check contents op containerd.conf file
+cat /etc/modules-load.d/containerd.conf
+
+# load required kernel modules
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+# Setup required sysctl params, these persist across reboots.
+cat <<EOF | sudo tee /etc/sysctl.d/99-kubernetes-cri.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.ipv4.ip_forward                 = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+EOF
+
+# check contents of 99-kubernetes-cri.conf
+cat /etc/sysctl.d/99-kubernetes-cri.conf
+
+
+# Apply sysctl params without reboot
+sudo sysctl --system
+
+
+# Set up the repository
+# Install packages to allow apt to use a repository over HTTPS
+sudo apt-get update && sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+
+## Add Docker's official GPG key
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key --keyring /etc/apt/trusted.gpg.d/docker.gpg add -
+
+## Add Docker apt repository. Only required if the file  /etc/apt/sources.list.d/docker.list  does not exists
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable"
+
+
+# Step 5 - Install containerd
+sudo apt-get update && sudo apt-get install -y containerd.io
+
+# Step 6 -  Configure containerd
+sudo mkdir -p /etc/containerd
+sudo containerd config default | sudo tee /etc/containerd/config.toml
+
+# Step 7  - Make containerd to use the systemd cgroup driver
+To use the systemd cgroup driver in /etc/containerd/config.toml with runc, set
+
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  ...
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    SystemdCgroup = true
+
+
+
+# Step 8 - Start containerd
+sudo systemctl enable containerd
+sudo systemctl start containerd
+sudo systemctl status containerd
+
+# Step 9 - Test containerd (optional)
+sudo ctr image ls
+
+#More examples can be found. https://sweetcode.io/getting-started-with-containerd/
+
+# Step 10 - replace contents fo  file /var/lib/kubelet/kubeadm-flag.env
+KUBELET_KUBEADM_ARGS="--container-runtime=remote --container-runtime-endpoint=/run/containerd/containerd.sock"
+
+# Step 11 - Start kubernetes 
+sudo systemctl daemon-reload
+sudo systemctl start kubelet
+
+#Step 12 - Enable Scheduling worker node
+kubectl uncordon <<node name>>
+
+
+
+#B. Replacing the docker engine on a worker node
+
+# Step 1 - Stop the master node
+sudo systemctl stop kubelet
+
+# Execute Step 3 to 11 as described in the procedure for the worken node. 
+kubectl edit node <<master node name>>
+
+#Step 12 - Modify the kubernetes master config file
+kubectl edit node <<master node name>>
+
+#change the following line
+      kubeadm.alpha.kubernetes.io/cri-socket: /var/run/dockershim.sock to kubeadm.alpha.kubernetes.io/cri-socket: /run/containerd/containerd.sock
+
+
+
+
+
+
