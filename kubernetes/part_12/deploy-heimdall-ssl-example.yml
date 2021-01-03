@@ -114,6 +114,7 @@ metadata:
   namespace: heimdall      # < namespace where place the deployment and pods
   annotations:
     kubernetes.io/ingress.class: "nginx"   # < use the nginx ingress controller
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # < communicate with the backend (service/pod)
     cert-manager.io/cluster-issuer: "letsencrypt-prod" # < use letsencrypt-prod application in kubernetes to generate ssl certificate
 spec:
   rules:
@@ -123,7 +124,7 @@ spec:
       - path: /
         backend:
           serviceName: heimdall-service # < connect the ingress entry to service created earlier
-          servicePort: 80
+          servicePort: 443
   tls: # < placing a host in the TLS config will indicate a cert should be created
   - hosts:
     - heimdall.mydomain.com  # < hostname to access the heimdall
