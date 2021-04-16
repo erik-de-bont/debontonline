@@ -1,0 +1,22 @@
+#IPVS Configuration Requirements
+#If you happen to be running kube-proxy in ipvs mode you'll have to make a quick change to allow ARP. If you are using the default iptables mode then you can safely skip this step.
+
+kubectl edit configmap -n kube-system kube-proxy
+#Set the following keys un the kube-proxy configmap:
+
+#apiVersion: kubeproxy.config.k8s.io/v1alpha1
+#kind: KubeProxyConfiguration
+#mode: "ipvs"
+#ipvs:
+#  strictARP: true
+
+
+
+#Deploying MetalLB Resources
+#The following commands will create a namespace metallb-system, the speaker daemonset, controller deployment, and service accounts:
+
+kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.6/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.6/manifests/metallb.yaml
+
+#The first time you deploy MetalLB you'll also have to generate the secretkey for speaker communication however for upgrades this can remain unchanged:
+kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
