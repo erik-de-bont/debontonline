@@ -1,0 +1,132 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextcloud
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nextcloud-server-pv-nfs
+  namespace: nextcloud
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Ti
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  mountOptions:
+    - hard
+    - nfsvers=4.1
+  nfs:
+    server: xxx.xxx.xxx.xxx
+    path: /volume1/data/nextcloud-server
+    readOnly: false
+---    
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-server-pvc
+  namespace: nextcloud
+spec:
+  storageClassName: "" 
+  volumeName: nextcloud-server-pv-nfs
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Ti
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud                  # < name of the deploymentand reference
+  namespace: nextcloud             # < namespace where to place the deployment and pods
+  labels:                         
+    app: nextcloud                 # < label for tagging and reference
+spec:
+  replicas: 1                      # < number of pods to deploy
+  selector:
+    matchLabels:
+      app: nextcloud
+  strategy:
+    rollingUpdate:
+      maxSurge: 0                  # < The number of pods that can be created above the desired amount of pods during an update
+      maxUnavailable: 1            # < The number of pods that can be unavailable during the update process
+    type: RollingUpdate            # < New pods are added gradually, and old pods are terminated gradually
+  template:
+    metadata:
+      labels:
+        app: nextcloud
+    spec:
+      volumes:
+      - name: nfs-nextcloud                # < linkname of the volume for the pvc
+        persistentVolumeClaim:
+          claimName: nextcloud-server-pvc  # < pvc name we created in the previous yaml
+      - name: nextcloud-ssl
+        secret:
+          secretName: nextcloud-net-tls    # < link to certificate (see ingress yaml)
+      containers:
+      - image: ghcr.io/linuxserver/nextcloud  # < the name of the docker image we will use
+        name: nextcloud                    # < name of container
+        imagePullPolicy: Always            # < always use the latest image when creating container/pod
+        env:                               # < environment variables. See https://hub.docker.com/r/linuxserver/nextcloud
+        - name: PGID
+          value: "100" # < group "user"
+        - name: PUID
+          value: "1041" # < user "docker"
+        - name: TZ
+          value: Europe/Amsterdam
+        ports:
+         - containerPort: 443              # < required network portnumber. See https://hub.docker.com/r/linuxserver/nextcloud
+           name: https-443
+           protocol: TCP
+        volumeMounts:                      # < the volume mount in the container. Look at the relation volumelabel->pvc->pv
+         - mountPath: /config              
+           name: nfs-nextcloud
+           subPath: config
+         - mountPath: /data
+           name: nfs-nextcloud
+           subPath: data 
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nextcloud-service                  # < name of the service
+  namespace: nextcloud                     # < namespace where to place service
+spec: 
+  selector:
+    app: nextcloud                         # < reference to the deployment (connects service with the deployment)                                                      
+  ports:
+    - name: https-443
+      protocol: TCP
+      port: 443
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextcloud         # < name of ingress entry 
+  namespace: nextcloud    # < namespace where place the ingress entry
+  annotations:
+    kubernetes.io/ingress.class: "nginx"   # < use the nginx ingress controller
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"  # < communicate in https with the backend (service/pod)
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"     # < use letsencrypt-prod application in kubernetes to generate ssl certificate
+    nginx.ingress.kubernetes.io/proxy-body-size: 10240m    # < this setting allow the nginx-controller to handle large files (10Gb)
+spec:
+  rules:
+  - host: nextcloud.mydomain.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix  # pathType no longer has a default value in v1; "Exact", "Prefix", or "ImplementationSpecific" must be specified
+        backend:
+          service:
+            name: nextcloud-service   
+            port:
+              number: 443
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - nextcloud.mydomain.com
+    secretName: nextcloud.mydomain.com-tls # < cert-manager will store the created certificate in this secret.
+---

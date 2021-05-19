@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextcloud
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: nextcloud-db-pv-nfs # < name of the persisant volume ("pv") in kubenetes
+  namespace: nextcloud      # < namespace where to place the pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Gi            # < max. size we reserve for the pv
+  accessModes:
+    - ReadWriteOnce         # < One pod can write to storage
+  persistentVolumeReclaimPolicy: Retain # < the persistent volume can be reclaimed
+  nfs:
+    path: /volume1/data/nextcloud-db  # < Name of your NFS share with subfolder
+    server: xxx.xxx.xxx.xxx               # < IP number of your NFS server             
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-db-pvc  # < name of the persistent volume claim ("pvc")
+  namespace: nextcloud    # < namespace where to place the pvc
+spec:
+  storageClassName: ""
+  volumeName: nextcloud-db-pv-nfs
+  accessModes:
+    - ReadWriteOnce       # < One pod can write to storage. Same value as pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi        # < how much data can the pvc claim from pv
+---
+apiVersion: apps/v1
+kind: StatefulSet      # < kind of installation (statefulset vs Deployment)
+metadata:
+  name: nextcloud-db   # < name of the deployment
+  namespace: nextcloud # < namespace where to place the statefulset and pods
+  labels:
+    app: nextcloud     # < label for tagging and reference
+spec:
+  serviceName: nextcloud-db-service       # < name of the service   (see service yaml part)
+  replicas: 1                             # < number of pods to deploy
+  selector:
+    matchLabels:
+      pod-label: nextcloud-db-pod         # < pod-label for tagging and reference
+  template:
+    metadata:
+      labels:
+        pod-label: nextcloud-db-pod
+    spec:
+     terminationGracePeriodSeconds: 1800
+     volumes:
+      - name: nextcloud-db-storage        
+        persistentVolumeClaim:            # < linkname of the volume for the pvc
+          claimName: nextcloud-db-pvc     # < pvc name we created in the previous yaml 
+     containers:
+      - name: mariadb
+        image: linuxserver/mariadb
+        imagePullPolicy: Always
+        env:                               # < environment variables. See https://hub.docker.com/r/linuxserver/mariadb
+        - name: PGID
+          value: "100" # < group "user"     
+        - name: PUID                       
+          value: "1041" # < user "docker"
+        - name: TZ
+          value: Europe/Amsterdam          
+        - name: MYSQL_DATABASE
+          value: nextcloud
+        envFrom:
+        - secretRef:
+            name: nextcloud-db-secret      # < link reference to the created secret
+        volumeMounts:
+         - name: nextcloud-db-storage      # < the volume mount in the container. Look at the relation volumelabel->pvc->pv
+           mountPath: /config              # < mount location in the container
+           subPath: mariadb-config         # < mounted subpath in under /config in container 
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nextcloud-db-service           # < service name (see link with statufulset yaml)
+  namespace: nextcloud
+spec:
+  selector:
+    pod-label: nextcloud-db-pod        # < reference to the statefulset (connects the service with the statefulset)
+  ports:
+    - name: mysql
+      protocol: TCP
+      port: 3306
+---
