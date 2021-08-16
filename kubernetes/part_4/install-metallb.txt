@@ -15,8 +15,8 @@ kubectl edit configmap -n kube-system kube-proxy
 #Deploying MetalLB Resources
 #The following commands will create a namespace metallb-system, the speaker daemonset, controller deployment, and service accounts:
 
-kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.6/manifests/namespace.yaml
-kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.9.6/manifests/metallb.yaml
+kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.10.2/manifests/namespace.yaml
+kubectl apply -f https://raw.githubusercontent.com/google/metallb/v0.10.2/manifests/metallb.yaml
 
 #The first time you deploy MetalLB you'll also have to generate the secretkey for speaker communication however for upgrades this can remain unchanged:
 kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
