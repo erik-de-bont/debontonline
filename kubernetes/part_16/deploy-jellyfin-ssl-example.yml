@@ -1,0 +1,247 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-pv-nfs-config   # < name of the persisant volume ("pv") in kubenetes
+  namespace: jellyfin            # < namespace where place the pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Gi                   # < max. size we reserve for the pv
+  accessModes:
+    - ReadWriteMany                # < Multiple pods can write to storage 
+  persistentVolumeReclaimPolicy: Retain # < The persistent volume can reclaimed 
+  nfs:
+    path: /volume1/plex            # < Name of your NFS share with subfolder
+    server: xxx.xxx.xxx.xxx        # < IP number of your NFS server
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-pv-nfs-data
+  namespace: jellyfin
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Ti                   # < max. size we reserve for the pv. A bigger value than the configdata
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /volume1/data
+    server: xxx.xxx.xxx.xxx     
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-pvc-config   # < name of the persistant volume claim ("pvc'")
+  namespace: jellyfin         # < namespace where place the pvc
+spec:
+  storageClassName: ""
+  volumeName: jellyfin-pv-nfs-config  # < the pv it will "claim" to storage. Created in the previous yaml.
+  accessModes:
+    - ReadWriteMany             # < Multiple pods can write to storage. Same value as pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi              # < How much data can the pvc claim from pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-pvc-data
+  namespace: jellyfin
+spec:
+  storageClassName: ""
+  volumeName: jellyfin-pv-nfs-data
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1T
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: jellyfin               # < label for tagging and reference
+  name: jellyfin                # < name of the deployment
+  namespace: jellyfin           # < namespace where to place the deployment and pods               # < namespace where place the deployment and pods
+spec:
+  replicas: 1                     # < number of pods to deploy
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: jellyfin
+  strategy:
+    rollingUpdate:
+      maxSurge: 0                 # < The number of pods that can be created above the desired amount of pods during an update
+      maxUnavailable: 1           # < The number of pods that can be unavailable during the update process
+    type: RollingUpdate           # < New pods are added gradually, and old pods are terminated gradually
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      volumes:
+      - name: nfs-plex-config     # < linkname of the volume for the pvc
+        persistentVolumeClaim:
+          claimName: jellyfin-pvc-config  # < pvc name we created in the previous yaml
+      - name: nfs-data
+        persistentVolumeClaim:
+          claimName: jellyfin-pvc-data
+      containers:
+      - env:                       # < environment variables. See https://hub.docker.com/r/linuxserver/plex
+        - name: PLEX_CLAIM
+          value: claim-XwVPsHsaakdfaq66tha9
+        - name: PGID
+          value: "\x31\x30\x30"    # < ASCII code for '100'
+        - name: PUID
+          value: "\x31\x30\x33\x35" # < ACII code for '1035'
+        - name: VERSION
+          value: latest
+        - name: TZ
+          value: Europe/Amsterdam  # < Timezone
+        image: ghcr.io/linuxserver/plex   # < the name of the docker image we will use
+        imagePullPolicy: Always    # < always use the latest image when creating container/pod
+        name: jellyfin           # < name of container
+        ports:
+        - containerPort: 32400     # < required network portnumber. See https://hub.docker.com/r/linuxserver/plex
+          name: pms-web            # < reference name from the port in the service yaml
+          protocol: TCP
+        - containerPort: 32469
+          name: dlna-tcp
+          protocol: TCP
+        - containerPort: 1900
+          name: dlna-udp
+          protocol: UDP
+        - containerPort: 3005
+          name: plex-companion
+          protocol: TCP  
+        - containerPort: 5353
+          name: discovery-udp
+          protocol: UDP  
+        - containerPort: 8324
+          name: plex-roku
+          protocol: TCP  
+        - containerPort: 32410
+          name: gdm-32410
+          protocol: UDP
+        - containerPort: 32412
+          name: gdm-32412
+          protocol: UDP
+        - containerPort: 32413
+          name: gdm-32413
+          protocol: UDP
+        - containerPort: 32414
+          name: gdm-32414
+          protocol: UDP
+        resources: {}
+        stdin: true
+        tty: true
+        volumeMounts:            # < the volume mount in the container. Look at the relation volumelabel->pvc->pv
+        - mountPath: /config     # < mount location in the container
+          name: nfs-plex-config  # < volumelabel configured earlier in the yaml file
+        - mountPath: /data
+          name: nfs-data 
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: plex-udp              # < name of the service
+  namespace: jellyfin       # < namespace where to place service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: jellyfin # < annotation name to combine the Service IP, make sure it's same name as in the service UDP yaml
+spec:
+  selector:
+    app: jellyfin           # < reference to the deployment (connects the service with the deployment)
+  ports:
+  - port: 1900                # < port to open on the outside on the server
+    targetPort: 1900          # < targetport. port on the pod to passthrough
+    name: dlna-udp            # < reference name for the port in the deployment yaml
+    protocol: UDP
+  - port: 5353
+    targetPort: 5353
+    name: discovery-udp
+    protocol: UDP
+  - port: 32410
+    targetPort: 32410
+    name: gdm-32410
+    protocol: UDP
+  - port: 32412
+    targetPort: 32412
+    name: gdm-32412
+    protocol: UDP
+  - port: 32413
+    targetPort: 32413
+    name: gdm-32413
+    protocol: UDP
+  - port: 32414
+    targetPort: 32414
+    name: gdm-32414
+    protocol: UDP
+  type: LoadBalancer
+  loadBalancerIP: 192.168.1.66  # < IP to access your jellyfin. Should be one from the MetalLB range and the same as the UDP yaml
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: plex-tcp              # < name of the service
+  namespace: jellyfin       # < namespace where to place service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: jellyfin  # < annotation name to combine the Service IP, make sure it's same name as in the service UDP yaml
+spec:
+  selector:
+    app: jellyfin           # < reference to the deployment (connects the service with the deployment)
+  ports:                      
+  - port: 32400               # < port to open on the outside on the server
+    targetPort: 32400         # < targetport. port on the pod to passthrough
+    name: pms-web             # < reference name for the port in the deployment yaml
+    protocol: TCP
+  - port: 3005
+    targetPort: 3005
+    name: plex-companion
+  - port: 8324
+    name: plex-roku
+    targetPort: 8324  
+    protocol: TCP  
+  - port: 32469
+    targetPort: 32469
+    name: dlna-tcp
+    protocol: TCP
+  type: LoadBalancer
+  loadBalancerIP: 192.168.1.66  # < IP to access your jellyfin. Should be one from the MetalLB range and the same as the TCP yaml
+---  
+piVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: jellyfin            # < name of ingress entry
+  namespace: jellyfin       # < namespace where place the ingress enty
+
+  annotations:
+    kubernetes.io/ingress.class: "nginx"  # < use the nginx ingress controller
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"  # < communicate in https with the backend (service/pod)
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"     # < use letsencrypt-prod application in kubernetes to generate ssl certificate
+    nginx.ingress.kubernetes.io/app-root: /web             # < the root directory of the plex webserver
+spec:
+  rules:
+  - host: jellyfin.mydomain.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: plex-tcp
+          servicePort: pms-web   # < same label as the port in the service tcp file
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - jellyfin.mydomain.com
+    secretName: jellyfin.mydomain.com-tls # < cert-manager will store the created certificate in this secret.
+    
