@@ -189,7 +189,7 @@ spec:
     name: gdm-32414
     protocol: UDP
   type: LoadBalancer
-  loadBalancerIP: 192.168.1.66  # < IP to access your plexserver. Should be one from the MetalLB range and the same as the UDP yaml
+  loadBalancerIP: xxx.xxx.xxx.xxx  # < IP to access your plexserver. Should be one from the MetalLB range and the same as the UDP yaml
 ---
 kind: Service
 apiVersion: v1
@@ -218,7 +218,7 @@ spec:
     name: dlna-tcp
     protocol: TCP
   type: LoadBalancer
-  loadBalancerIP: 192.168.1.66  # < IP to access your plexserver. Should be one from the MetalLB range and the same as the TCP yaml
+  loadBalancerIP: xxx.xxx.xxx.xxx  # < IP to access your plexserver. Should be one from the MetalLB range and the same as the TCP yaml
 ---  
 piVersion: networking.k8s.io/v1beta1
 kind: Ingress
