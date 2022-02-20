@@ -1,2 +1,2 @@
-# blog
-Files from https://www.debontonline.com
+# debontonline
+Example files from https://www.debontonline.com
