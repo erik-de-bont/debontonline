@@ -51,9 +51,10 @@ $Data3= (Invoke-RestMethod -Headers @{Authorization = "Bearer $($TokenResponse.a
 # Example 4: Get all Azure AD users via Microsoft Graph API with more than 999 users. 
 # @odata.nextLink is used if results greated than 999 results
 $GetUsersUrl4 = "https://graph.microsoft.com/v1.0/users"
+$uri = $GetUsersUrl4
 $Data4 = while (-not [string]::IsNullOrEmpty($uri)) {
     $apiCall = try {
-        Invoke-RestMethod -Headers @{Authorization = "Bearer $($Tokenresponse.access_token)"} -Uri $GetUsersUrl4 -Method Get
+        Invoke-RestMethod -Headers @{Authorization = "Bearer $($Tokenresponse.access_token)"} -Uri $uri -Method Get
     }
     catch {
         $errorMessage = $_.ErrorDetails.Message | ConvertFrom-Json
