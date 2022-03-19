@@ -27,33 +27,33 @@ $TokenAccess = $Tokenresponse.access_token
 
 # Example 1: Get all Azure AD Users via Microsoft Graph API
 $GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
-$Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
-$Result = ($Data | select-object Value).Value
-$Users = $Result | select DisplayName,UserPrincipalName,Id
+$Data1 = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$Result1 = ($Data1 | select-object Value).Value
+$Users1 = $Result1 | select DisplayName,UserPrincipalName,Id
 
 
 
 # Example 2: Get Azure AD users with UserPrincipalName starting with "v" via graph selection
 # How-to use filters with MS Graph API: https://docs.microsoft.com/en-us/graph/query-parameters#filter-using-lambda-operators
-$GetSpecificUsersUrl = 'https://graph.microsoft.com/beta/users?$filter=startswith(userPrincipalName,''v'')&$select=displayName,userPrincipalName,Id'
-$Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
-$Result = ($Data | select-object Value).Value
-$Users = $Result | select DisplayName,UserPrincipalName,Id
+$GetUsersUrl2 = 'https://graph.microsoft.com/beta/users?$filter=startswith(userPrincipalName,''v'')&$select=displayName,userPrincipalName,Id'
+$Data2 = Invoke-RestMethod -Uri $GetUsersUrl2 -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$Result2 = ($Data2 | select-object Value).Value
+$Users2 = $Result2 | select DisplayName,UserPrincipalName,Id
 
 
 
 # Example 3: Get users in the tenant with userPrincipalName starting with "v" via powershell selection
-$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
-$DataPS= (Invoke-RestMethod -Headers @{Authorization = "Bearer $($TokenResponse.access_token)"} -Uri $uri -Method Get).value | Select-Object displayName,userPrincipalName,Id| Where-Object {$_.userPrincipalName -like "v*"}
+$GetUsersUrl3 = "https://graph.microsoft.com/v1.0/users"
+$Data3= (Invoke-RestMethod -Headers @{Authorization = "Bearer $($TokenResponse.access_token)"} -Uri $GetUsersUrl3 -Method Get).value | Select-Object displayName,userPrincipalName,Id| Where-Object {$_.userPrincipalName -like "v*"}
 
 
 
 # Example 4: Get all Azure AD users via Microsoft Graph API with more than 999 users. 
 # @odata.nextLink is used if results greated than 999 results
-$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
-$Data = while (-not [string]::IsNullOrEmpty($uri)) {
+$GetUsersUrl4 = "https://graph.microsoft.com/v1.0/users"
+$Data4 = while (-not [string]::IsNullOrEmpty($uri)) {
     $apiCall = try {
-        Invoke-RestMethod -Headers @{Authorization = "Bearer $($Tokenresponse.access_token)"} -Uri $uri -Method Get
+        Invoke-RestMethod -Headers @{Authorization = "Bearer $($Tokenresponse.access_token)"} -Uri $GetUsersUrl4 -Method Get
     }
     catch {
         $errorMessage = $_.ErrorDetails.Message | ConvertFrom-Json
@@ -64,6 +64,6 @@ $Data = while (-not [string]::IsNullOrEmpty($uri)) {
         $apiCall
     }
 } 
-$Result = ($Data | select-object Value).Value
-$Users = $Result | select DisplayName,UserPrincipalName,Id
+$Result4 = ($Data4 | select-object Value).Value
+$Users4 = $Result4 | select DisplayName,UserPrincipalName,Id
 
