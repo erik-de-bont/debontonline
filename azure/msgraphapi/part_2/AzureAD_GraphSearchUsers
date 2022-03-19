@@ -1,0 +1,70 @@
+# Example file from www.debontonline.com
+# Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
+# Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
+
+
+# Minimum Required API permission for execution to create a new users
+# User.Read.Write.All
+
+
+
+
+# Connection information for Graph API connection - specific to Agency
+$clientID = "xxxxxxx-xxxx-xxxx-xxxxxxxxx" #  App Id MS Graph API Connector App registration
+$tenantName = "<<mytenantname>>.onmicrosoft.com" # your tenantname (example: debontonlinedev.onmicrosoft.com)
+$clientSecret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Secret MS Graph API Connector App registration
+$resource = "https://graph.microsoft.com/"
+ 
+$ReqTokenBody = @{
+    Grant_Type    = "client_credentials"
+    Scope         = "https://graph.microsoft.com/.default"
+    client_Id     = $clientID
+    Client_Secret = $clientSecret
+} 
+ 
+$TokenResponse = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantName/oauth2/v2.0/token" -Method POST -Body $ReqTokenBody
+$TokenAccess = $Tokenresponse.access_token
+
+
+# Example 1: Get all Azure AD Users via Microsoft Graph API
+$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
+$Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$Result = ($Data | select-object Value).Value
+$Users = $Result | select DisplayName,UserPrincipalName,Id
+
+
+
+# Example 2: Get Azure AD users with UserPrincipalName starting with "v" via graph selection
+# How-to use 
+$GetSpecificUsersUrl = 'https://graph.microsoft.com/beta/users?$filter=startswith(userPrincipalName,''v'')&$select=displayName,userPrincipalName,Id,signInActivity'
+$Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$Result = ($Data | select-object Value).Value
+$Users = $Result | select DisplayName,UserPrincipalName,Id
+
+
+
+# Example 3: Get users in the tenant with userPrincipalName starting with "l" via powershell selection
+$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
+$DataPS= (Invoke-RestMethod -Headers @{Authorization = "Bearer $($TokenResponse.access_token)"} -Uri $uri -Method Get).value | Select-Object displayName,userPrincipalName,Id,signInActivitiy| Where-Object {$_.userPrincipalName -like "l*"}
+
+
+
+# Example 4: Get all Azure AD users via Microsoft Graph API with more than 999 users. 
+# @odata.nextLink is used if results greated than 999 results
+$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
+$Data = while (-not [string]::IsNullOrEmpty($uri)) {
+    $apiCall = try {
+        Invoke-RestMethod -Headers @{Authorization = "Bearer $($Tokenresponse.access_token)"} -Uri $uri -Method Get
+    }
+    catch {
+        $errorMessage = $_.ErrorDetails.Message | ConvertFrom-Json
+    }
+    $uri = $null
+    if ($apiCall) {
+        $uri = $apiCall.'@odata.nextLink'
+        $apiCall
+    }
+} 
+$Result = ($Data | select-object Value).Value
+$Users = $Result | select DisplayName,UserPrincipalName,Id
+
