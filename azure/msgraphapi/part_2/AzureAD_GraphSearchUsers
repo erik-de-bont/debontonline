@@ -8,7 +8,6 @@
 
 
 
-
 # Connection information for Graph API connection - specific to Agency
 $clientID = "xxxxxxx-xxxx-xxxx-xxxxxxxxx" #  App Id MS Graph API Connector App registration
 $tenantName = "<<mytenantname>>.onmicrosoft.com" # your tenantname (example: debontonlinedev.onmicrosoft.com)
@@ -35,17 +34,17 @@ $Users = $Result | select DisplayName,UserPrincipalName,Id
 
 
 # Example 2: Get Azure AD users with UserPrincipalName starting with "v" via graph selection
-# How-to use 
-$GetSpecificUsersUrl = 'https://graph.microsoft.com/beta/users?$filter=startswith(userPrincipalName,''v'')&$select=displayName,userPrincipalName,Id,signInActivity'
+# How-to use filters with MS Graph API: https://docs.microsoft.com/en-us/graph/query-parameters#filter-using-lambda-operators
+$GetSpecificUsersUrl = 'https://graph.microsoft.com/beta/users?$filter=startswith(userPrincipalName,''v'')&$select=displayName,userPrincipalName,Id'
 $Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
 $Result = ($Data | select-object Value).Value
 $Users = $Result | select DisplayName,UserPrincipalName,Id
 
 
 
-# Example 3: Get users in the tenant with userPrincipalName starting with "l" via powershell selection
+# Example 3: Get users in the tenant with userPrincipalName starting with "v" via powershell selection
 $GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
-$DataPS= (Invoke-RestMethod -Headers @{Authorization = "Bearer $($TokenResponse.access_token)"} -Uri $uri -Method Get).value | Select-Object displayName,userPrincipalName,Id,signInActivitiy| Where-Object {$_.userPrincipalName -like "l*"}
+$DataPS= (Invoke-RestMethod -Headers @{Authorization = "Bearer $($TokenResponse.access_token)"} -Uri $uri -Method Get).value | Select-Object displayName,userPrincipalName,Id| Where-Object {$_.userPrincipalName -like "v*"}
 
 
 
