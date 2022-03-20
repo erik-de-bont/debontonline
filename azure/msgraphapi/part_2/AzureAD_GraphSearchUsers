@@ -8,7 +8,7 @@
 
 
 
-# Connection information for Graph API connection - specific to Agency
+# Connection information for Graph API connection 
 $clientID = "xxxxxxx-xxxx-xxxx-xxxxxxxxx" #  App Id MS Graph API Connector App registration
 $tenantName = "<<mytenantname>>.onmicrosoft.com" # your tenantname (example: debontonlinedev.onmicrosoft.com)
 $clientSecret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Secret MS Graph API Connector App registration
@@ -35,7 +35,7 @@ $Users1 = $Result1 | select DisplayName,UserPrincipalName,Id
 
 # Example 2: Get Azure AD users with UserPrincipalName starting with "v" via graph selection
 # How-to use filters with MS Graph API: https://docs.microsoft.com/en-us/graph/query-parameters#filter-using-lambda-operators
-$GetUsersUrl2 = 'https://graph.microsoft.com/beta/users?$filter=startswith(userPrincipalName,''l'')&$select=displayName,userPrincipalName,Id'
+$GetUsersUrl2 = 'https://graph.microsoft.com/v1.0/users?$filter=startswith(userPrincipalName,''l'')&$select=displayName,userPrincipalName,Id'
 $Data2 = Invoke-RestMethod -Uri $GetUsersUrl2 -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
 $Result2 = ($Data2 | select-object Value).Value
 $Users2 = $Result2 | select DisplayName,UserPrincipalName,Id
