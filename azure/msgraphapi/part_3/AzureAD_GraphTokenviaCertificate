@@ -1,7 +1,7 @@
 # Example file from www.debontonline.com
 # Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
 # Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
-
+# Create Self Signed Certificate Script: https://www.powershellgallery.com/packages/ExchangeOnlineManagement/1.0.0/Content/Create-SelfSignedCertificate.ps1#:~:text=Use%20%2DForce%20option%20to%20force,and%20create%20a%20new%20certificate.&text=This%20will%20create%20a%20new,to%20protect%20the%20private%20key.
 
 # Minimum Required API permission for execution to list users
 # User.Read.All
@@ -9,11 +9,8 @@
 # Required Powershell Module
 # Install-Module MSAL.PS 
 
-# Minimum Required API permission for execution
-# User.Read.Write.All
 
-
-##Declare Variables
+# Connection information for Graph API connection - Certificate Based
 $clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
 $TenantName = "<<tenantname>>.onmicrosoft.com" # Example debontonlinedev.onmicrosoft.com
 $TenantID = "03131d4b-1164-43fa-97d1-8ee350d695ad" # Tenant ID 
