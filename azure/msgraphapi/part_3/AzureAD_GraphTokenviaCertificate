@@ -1,0 +1,31 @@
+# Example file from www.debontonline.com
+# Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
+# Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
+
+
+# Minimum Required API permission for execution to list users
+# User.Read.All
+
+# Required Powershell Module
+# Install-Module MSAL.PS 
+
+# Minimum Required API permission for execution
+# User.Read.Write.All
+
+
+##Declare Variables
+$clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
+$TenantName = "<<tenantname>>.onmicrosoft.com" # Example debontonlinedev.onmicrosoft.com
+$TenantID = "03131d4b-1164-43fa-97d1-8ee350d695ad" # Tenant ID 
+$CertificatePath = "Cert:\CurrentUser\my\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Add the Certificate Path Including Thumbprint here e.g. cert:\currentuser\my\6C1EE1A11F57F2495B57A567211220E0ADD72DC1 >#
+##Import Certificate
+$Certificate = Get-Item $certificatePath
+##Request Token
+$TokenResponse = Get-MsalToken -ClientId $ClientId -TenantId $TenantId -ClientCertificate $Certificate
+$TokenAccess = $TokenResponse.accesstoken
+
+# Get all Azure AD Users via Microsoft Graph API
+$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
+$Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$Result = ($Data | select-object Value).Value
+$Users = $Result | select DisplayName,UserPrincipalName,Id
