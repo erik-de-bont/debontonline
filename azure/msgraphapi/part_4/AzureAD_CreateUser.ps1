@@ -9,24 +9,23 @@
 # User.ManageIdentities.All
 
 
+# Required Powershell Module for certificate authorisation
+# Install-Module MSAL.PS 
 
-# Connection information for Graph API connection - specific to Agency
-$clientID = "xxxxxxx-xxxx-xxxx-xxxxxxxxx" #  App Id MS Graph API Connector App registration
-$tenantName = "<<mytenantname>>.onmicrosoft.com" # your tenantname (example: debontonlinedev.onmicrosoft.com)
-$clientSecret = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Secret MS Graph API Connector App registration
-$resource = "https://graph.microsoft.com/"
+
+# Connection information for Graph API connection - Certificate Based
+$clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
+$TenantName = "<<tenantname>>.onmicrosoft.com" # Example debontonlinedev.onmicrosoft.com
+$TenantID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" # Tenant ID 
+$CertificatePath = "Cert:\CurrentUser\my\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Add the Certificate Path Including Thumbprint here e.g. cert:\currentuser\my\6C1EE1A11F57F2495B57A567211220E0ADD72DC1 >#
+##Import Certificate
+$Certificate = Get-Item $certificatePath
+##Request Token
+$TokenResponse = Get-MsalToken -ClientId $ClientId -TenantId $TenantId -ClientCertificate $Certificate
+$TokenAccess = $TokenResponse.accesstoken
  
-$ReqTokenBody = @{
-    Grant_Type    = "client_credentials"
-    Scope         = "https://graph.microsoft.com/.default"
-    client_Id     = $clientID
-    Client_Secret = $clientSecret
-} 
- 
-$TokenResponse = Invoke-RestMethod -Uri "https://login.microsoftonline.com/$tenantName/oauth2/v2.0/token" -Method POST -Body $ReqTokenBody
-$TokenAccess = $Tokenresponse.access_token
- 
-<#Create User
+
+# Create Single User Account
 $CreateUserBody = @{
     "userPrincipalName"="John.Doe@$tenantname"
     "displayName"="John Doe"
@@ -42,4 +41,36 @@ $CreateUserBody = @{
 $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
 $User = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
 
+
+
+# Create multiple users via CSV file
+$ImportFile = "C:\Temp\Import\AzureADUsers.csv" #Location of *.csv file
+$date=Get-Date -Format "yyyyMMdd_HHmm"
+$logfile = "C:\Temp\Import\AzureADUsers_$date.log"
+
+$Users = Import-Csv -Path $Importfile -Delimiter ";"
+
+ForEach($User in $Users)  {
+
+    $CreateUserBody = @{
+        "userPrincipalName"= $UPN
+        "displayName"= $DisplayName
+        "mailNickname"= $MailNickName
+        "accountEnabled"=$true
+        "passwordProfile"= @{
+            "forceChangePasswordNextSignIn" = $false
+            "forceChangePasswordNextSignInWithMfa" = $false
+            "password"= $password
+        }
+     }
+   
+     $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
+    $UserLog = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
+    Write-Output $UserLog | ft >> $logfile 
+}   
+    
+ 
+
+
+    
 

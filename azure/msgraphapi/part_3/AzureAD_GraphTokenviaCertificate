@@ -6,7 +6,7 @@
 # Minimum Required API permission for execution to list users
 # User.Read.All
 
-# Required Powershell Module
+# Required Powershell Module for certificate authorisation
 # Install-Module MSAL.PS 
 
 
