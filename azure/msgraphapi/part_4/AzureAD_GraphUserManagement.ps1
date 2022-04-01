@@ -54,7 +54,7 @@ $ModifyUser = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "
 
 
 #Delete Single User Account
-$DeleteUserUPN = "CPATestUserSame2@$tenantname"
+$DeleteUserUPN = "John.Doe@$tenantname"
 $DeleteUserUrl =  "https://graph.microsoft.com/v1.0/users/$DeleteUserUPN"
 Invoke-RestMethod -Uri $DeleteUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Delete
 
