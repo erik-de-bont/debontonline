@@ -29,7 +29,7 @@ $TokenAccess = $TokenResponse.accesstoken
 $CreateUserBody = @{
     "userPrincipalName"="John.Doe@$tenantname"
     "displayName"="John Do"
-    "mailNickname"="John Doe"
+    "mailNickname"="John.Doe"
     "accountEnabled"=$true
     "passwordProfile"= @{
         "forceChangePasswordNextSignIn" = $false
@@ -48,8 +48,8 @@ $ModifyUserBody = @{
     "displayName"="John Doe"
 }
 
-$ModifyUserUrl = "https://graph.microsoft.com/v1.0/users/"
-$ModifyUser = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Patch -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
+$ModifyUserUrl = "https://graph.microsoft.com/v1.0/users/$ModifyUserUPN"
+$ModifyUser = Invoke-RestMethod -Uri $ModifyUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Patch -Body $($ModifyUserBody | convertto-json) -ContentType "application/json"
 
 
 
@@ -57,8 +57,6 @@ $ModifyUser = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "
 $DeleteUserUPN = "John.Doe@$tenantname"
 $DeleteUserUrl =  "https://graph.microsoft.com/v1.0/users/$DeleteUserUPN"
 Invoke-RestMethod -Uri $DeleteUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Delete
-
-
 
 
 # Create multiple users via CSV file
@@ -85,10 +83,5 @@ ForEach($User in $Users)  {
      $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
     $UserLog = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
     Write-Output $UserLog | ft >> $logfile 
-}   
-    
- 
-
-
-    
+}
 
