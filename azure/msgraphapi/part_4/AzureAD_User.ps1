@@ -28,7 +28,7 @@ $TokenAccess = $TokenResponse.accesstoken
 # Create Single User Account
 $CreateUserBody = @{
     "userPrincipalName"="John.Doe@$tenantname"
-    "displayName"="John Doe"
+    "displayName"="John Do"
     "mailNickname"="John Doe"
     "accountEnabled"=$true
     "passwordProfile"= @{
@@ -39,7 +39,25 @@ $CreateUserBody = @{
  }
 
 $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
-$User = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
+$CreateUser = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
+
+
+#Modify Single User Account
+$ModifyUserUPN = "John.Doe@$tenantname"
+$ModifyUserBody = @{
+    "displayName"="John Doe"
+}
+
+$ModifyUserUrl = "https://graph.microsoft.com/v1.0/users/"
+$ModifyUser = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Patch -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
+
+
+
+#Delete Single User Account
+$DeleteUserUPN = "CPATestUserSame2@$tenantname"
+$DeleteUserUrl =  "https://graph.microsoft.com/v1.0/users/$DeleteUserUPN"
+Invoke-RestMethod -Uri $DeleteUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Delete
+
 
 
 
