@@ -25,7 +25,7 @@ $TokenResponse = Get-MsalToken -ClientId $ClientId -TenantId $TenantId -ClientCe
 $TokenAccess = $TokenResponse.accesstoken
  
 
-# Create Single User Account
+# Example 1: Create Single User Account
 $CreateUserBody = @{
     "userPrincipalName"="John.Doe@$tenantname"
     "displayName"="John Do"
@@ -42,7 +42,7 @@ $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
 $CreateUser = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
 
 
-#Modify Single User Account
+#Example 2: Modify Single User Account
 $ModifyUserUPN = "John.Doe@$tenantname"
 $ModifyUserBody = @{
     "displayName"="John Doe"
@@ -53,13 +53,13 @@ $ModifyUser = Invoke-RestMethod -Uri $ModifyUserUrl -Headers @{Authorization = "
 
 
 
-#Delete Single User Account
+#Example 3: Delete Single User Account
 $DeleteUserUPN = "John.Doe@$tenantname"
 $DeleteUserUrl =  "https://graph.microsoft.com/v1.0/users/$DeleteUserUPN"
 Invoke-RestMethod -Uri $DeleteUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Delete
 
 
-# Create multiple users via CSV file
+# Example 4: Create multiple users via CSV file
 $ImportFile = "C:\Temp\Import\AzureADUsers.csv" #Location of *.csv file
 $date=Get-Date -Format "yyyyMMdd_HHmm"
 $logfile = "C:\Temp\Import\AzureADUsers_$date.log"
@@ -68,20 +68,25 @@ $Users = Import-Csv -Path $Importfile -Delimiter ";"
 
 ForEach($User in $Users)  {
 
+    $UserPrincipalName = $User.GivenName.ToLower() + "." + $User.Surname.ToLower() + "@"+ $tenantname
+    $DisplayName = $User.GivenName + " " + $User.SurName
+    $mailNickName = $User.GivenName.ToLower() + $User.SurName.ToLower() #no spaces allowed in MailNickname 
+    $Password = $User.Password
+
     $CreateUserBody = @{
-        "userPrincipalName"= $UPN
+        "userPrincipalName"= $UserPrincipalName
         "displayName"= $DisplayName
-        "mailNickname"= $MailNickName
+        "mailNickname"= $mailNickName
         "accountEnabled"=$true
         "passwordProfile"= @{
             "forceChangePasswordNextSignIn" = $false
             "forceChangePasswordNextSignInWithMfa" = $false
-            "password"= $password
+            "password"= $Password
         }
      }
    
-     $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
+    $CreateUserUrl = "https://graph.microsoft.com/v1.0/users"
     $UserLog = Invoke-RestMethod -Uri $CreateUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateUserBody | convertto-json) -ContentType "application/json"
-    Write-Output $UserLog | ft >> $logfile 
+    Write-Output $UserLog | Select-Object UserPrincipalName, displayname | ft >> $logfile
 }
 
