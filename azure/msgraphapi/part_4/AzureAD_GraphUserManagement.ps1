@@ -6,6 +6,7 @@
 
 # Minimum Required API permission for execution to create a new users
 # User.Read.Write.All
+# Directory.Read.Write.All
 # User.ManageIdentities.All
 
 
