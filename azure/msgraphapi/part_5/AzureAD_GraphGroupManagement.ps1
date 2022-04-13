@@ -1,14 +1,14 @@
 # Example file from www.debontonline.com
 # Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
-# Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/overview?view=graph-rest-1.0
-
+# Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0&preserve-view=true
 
 
 # Minimum Required API permission for execution to create a new users
 # Group.Create
 # Group.ReadWrite.All
+# GroupMember.ReadWrite.All
 # Directory.ReadWrite.All
-
+# To remove members from a role-assignable group, the calling user or app must also be assigned the RoleManagement.ReadWrite.Directory permission.
 
 # Required Powershell Module for certificate authorisation
 # Install-Module MSAL.PS 
@@ -28,30 +28,74 @@ $TokenAccess = $TokenResponse.accesstoken
 
 # Example 1: Create Single Security Group
 $CreateSecurityGroupBody = @{
-	Description = "Marketing "
-	DisplayName = "Marketing group"
+	Description = "Marketing Group"
+	DisplayName = "Marketing"
 	GroupTypes = @(
 	)
 	MailEnabled = $false
 	MailNickname = "marketing"
 	SecurityEnabled = $true
 	"Owners@odata.bind" = @(
-		"https://graph.microsoft.com/v1.0/users/AdeleV@erikdebontdev.onmicrosoft.com"
+		"https://graph.microsoft.com/v1.0/users/xxxxx@xxxxx.xxx"
 	)
 	"Members@odata.bind" = @(
-		"https://graph.microsoft.com/v1.0/users/GradyA@erikdebontdev.onmicrosoft.com"
-		"https://graph.microsoft.com/v1.0/users/HenriettaM@erikdebontdev.onmicrosoft.com"
+		"https://graph.microsoft.com/v1.0/users/xxxxx@xxxxx.xxx"
+		"https://graph.microsoft.com/v1.0/users/xxxxx@xxxxx.xxx"
 	)
 }
 
 $CreateSecurityGroupUrl = "https://graph.microsoft.com/v1.0/groups"
 $CreateSecurityGroup = Invoke-RestMethod -Uri $CreateSecurityGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateSecurityGroupBody | convertto-json) -ContentType "application/json"
 
-# Example 2: Modify Members Security Group
+
+# Example 2: Add Members Security Group
+## Retrieving the id of the 'Marketing" group
+$GroupMailNickName = 'Marketing'
+$GetGroupUrl = "https://graph.microsoft.com/v1.0/groups?`$filter=mailNickname eq '$GroupMailNickName'"
+$Data = Invoke-RestMethod -Uri $GetGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
+$Group = ($Data | select-object Value).Value
+$AddMembersGroupId = $Group.id
+## Retrieving the id's of the member's accounts and add the account to the group
+$Users = "xxxxx@xxxxx.xxx", "xxxxx@xxxxx.xxx", "xxxxx@xxxxx.xxx"
+Foreach ($User in $Users) {
+	$GetUsersUrl="https://graph.microsoft.com/v1.0/users/$user"
+	$Data2 = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+	$UserId = $data2.id
+	# Add useraccount (userid) to group
+	$AddMembersGroupBody  = @{
+			"@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$UserId"
+	}
+	$AddMembersGroupUrl = "https://graph.microsoft.com/v1.0/groups/$AddMembersGroupId/members/`$ref"
+	$AddMembersGroup = Invoke-RestMethod -Uri $AddMembersGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($AddMembersGroupBody | convertto-json) -ContentType "application/json"
+}
 
 
-# Example 3: Create Single Microsoft 365 Group
+# Example 3: Remove Member Security Group
+## Variables
+$RemoveUser = "xxxxx@xxxxx.xxx"
+$RemoveGroup = "Marketing"
+##
+## Retrieving the id of the 'Marketing" group
+$GetGroupUrl = "https://graph.microsoft.com/v1.0/groups?`$filter=mailNickname eq '$RemoveGroup'"
+$Data3a = Invoke-RestMethod -Uri $GetSecurityGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
+$Group = ($Data3a | select-object Value).Value
+$RemoveMemberGroupId = $Group.id
+## Retrieving the id of the User
+$GetRemoveUserUrl="https://graph.microsoft.com/v1.0/users/$RemoveUser"
+$Data3b = Invoke-RestMethod -Uri $GetRemoveUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$RemoveUserId = $Data3b.id
+## Removing the User from the 'Marketing'Group
+$RemoveMemberFromGroupUrl = "https://graph.microsoft.com/v1.0/groups/$RemoveMemberGroupId/members/$RemoveUserId/`$ref"
+$RemoveMemberFromGroup = Invoke-RestMethod -Uri $RemoveMemberFromGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Delete
+
 
 # Example 4: Delete Single Group
-
-# Example 4: Create multiple Security Groups via CSV
+## Retrieving the id of the "Marketing" group
+$DeleteGroupMailNickName = 'Marketing'
+$GetDeleteGroupUrl = "https://graph.microsoft.com/v1.0/groups?`$filter=mailNickname eq '$DeleteGroupMailNickName'"
+$Data4 = Invoke-RestMethod -Uri $GetDeleteGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
+$Result4 = ($Data | select-object Value).Value
+$DeleteGroupId = $Result3.id
+## Delete the "Marketing" group
+$DeleteGroupUrl = "https://graph.microsoft.com/v1.0/groups/$DeleteGroupId"
+$DeleteGroup = Invoke-RestMethod -Uri $DeleteGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Delete
