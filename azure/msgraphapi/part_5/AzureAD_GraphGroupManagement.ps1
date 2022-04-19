@@ -8,7 +8,7 @@
 # Group.ReadWrite.All
 # GroupMember.ReadWrite.All
 # Directory.ReadWrite.All
-# To remove members from a role-assignable group, the calling user or app must also be assigned the RoleManagement.ReadWrite.Directory permission.
+# To modify members from a role-assignable group, the calling user or app must also be assigned the "RoleManagement.ReadWrite.Directory" permission.
 
 # Required Powershell Module for certificate authorisation
 # Install-Module MSAL.PS 
