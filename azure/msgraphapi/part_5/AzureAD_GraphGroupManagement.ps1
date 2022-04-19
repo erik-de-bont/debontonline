@@ -45,7 +45,7 @@ $CreateSecurityGroupBody = @{
 }
 
 $CreateSecurityGroupUrl = "https://graph.microsoft.com/v1.0/groups"
-$CreateSecurityGroup = Invoke-RestMethod -Uri $CreateSecurityGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateSecurityGroupBody | convertto-json) -ContentType "application/json"
+$CreateSecurityGroup = Invoke-RestMethod -Uri $CreateGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($CreateSecurityGroupBody | convertto-json) -ContentType "application/json"
 
 
 # Example 2: Add Members Security Group
