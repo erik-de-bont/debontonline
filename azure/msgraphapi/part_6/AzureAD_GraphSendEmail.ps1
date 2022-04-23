@@ -5,10 +5,7 @@
 
 
 # Minimum Required API permission for execution to create a new users
-# Group.Create
-# Group.ReadWrite.All
-# Directory.ReadWrite.All
-
+# Mail.ReadWrite
 
 # Required Powershell Module for certificate authorisation
 # Install-Module MSAL.PS 
@@ -25,4 +22,64 @@ $Certificate = Get-Item $certificatePath
 $TokenResponse = Get-MsalToken -ClientId $ClientId -TenantId $TenantId -ClientCertificate $Certificate
 $TokenAccess = $TokenResponse.accesstoken
 
+
+# Example 1: Send E-mail Message
+$MailSenderUPN = "xxxxx@xxxxxx.xxx"
+$SendMailBody = @{
+	Message = @{
+		Subject = "Meet for lunch?"
+		Body = @{
+			ContentType = "Text"
+			Content = "The new cafeteria is open."
+		}
+		ToRecipients = @(
+			@{
+				EmailAddress = @{
+					Address = "fannyd@contoso.onmicrosoft.com"
+				}
+			}
+		)
+		CcRecipients = @(
+			@{
+				EmailAddress = @{
+					Address = "danas@contoso.onmicrosoft.com"
+				}
+			}
+		)
+	}
+	SaveToSentItems = "false"
+}
+$SendMailUrl = "/users/$MailSenderUPN/messages"
+$SendMail = Invoke-RestMethod -Uri $SendMailUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailBody | convertto-json) -ContentType "application/json"
+
+
+
+# Example 2: Send E-mail Attachment
+$MailSenderUPN = "xxxxx@xxxxxx.xxx"
+$SendMailWithAttachentBody = @{
+	Message = @{
+		Subject = "Meet for lunch?"
+		Body = @{
+			ContentType = "Text"
+			Content = "The new cafeteria is open."
+		}
+		ToRecipients = @(
+			@{
+				EmailAddress = @{
+					Address = "meganb@contoso.onmicrosoft.com"
+				}
+			}
+		)
+		Attachments = @(
+			@{
+				"@odata.type" = "#microsoft.graph.fileAttachment"
+				Name = "attachment.txt"
+				ContentType = "text/plain"
+				ContentBytes = "SGVsbG8gV29ybGQh"
+			}
+		)
+	}
+}
+$SendMailWithAttachmentUrl = "/users/$MailSenderUPN/messages"
+$SendMailWithAttachment = Invoke-RestMethod -Uri $SendMailWithAttachmentUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailWithAttachentBody  | convertto-json) -ContentType "application/json"
 
