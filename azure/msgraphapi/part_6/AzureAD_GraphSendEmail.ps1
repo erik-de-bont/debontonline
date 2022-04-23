@@ -1,8 +1,7 @@
 # Example file from www.debontonline.com
 # Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
 # Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/overview?view=graph-rest-1.0
-
-
+# Base64 encode/decode  https://www.base64encode.org/
 
 # Minimum Required API permission for execution to create a new users
 # Mail.ReadWrite
@@ -27,42 +26,42 @@ $TokenAccess = $TokenResponse.accesstoken
 $MailSenderUPN = "xxxxx@xxxxxx.xxx"
 $SendMailBody = @{
 	Message = @{
-		Subject = "Meet for lunch?"
+		Subject = "Test Message"
 		Body = @{
 			ContentType = "Text"
-			Content = "The new cafeteria is open."
+			Content =  "This is a test e-mail via Microsoft Graph API!"
 		}
 		ToRecipients = @(
 			@{
 				EmailAddress = @{
-					Address = "fannyd@contoso.onmicrosoft.com"
+					Address = "adelev@debontonlinedev.onmicrosoft.com"
 				}
 			}
 		)
 		CcRecipients = @(
-			@{
-				EmailAddress = @{
-					Address = "danas@contoso.onmicrosoft.com"
-				}
-			}
+			@{EmailAddress = @{
+					Address = "danas@debontonlinedev.onmicrosoft.com"
+			   }
+			},
+			@{EmailAddress = @{
+                    Address = "fannyd@debontonlinedev.onmicrosoft.com"
+               }
+            }   
 		)
 	}
-	SaveToSentItems = "false"
-}
-$SendMailUrl = "/users/$MailSenderUPN/messages"
-$SendMail = Invoke-RestMethod -Uri $SendMailUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailBody | convertto-json) -ContentType "application/json"
-
-
+$SendMailUrl = "https://graph.microsoft.com/v1.0/users/$MailSenderUPN/SendMail"
+$SendMail = Invoke-RestMethod -Uri $SendMailUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailBody | convertto-json -depth 4) -ContentType "application/json"
+	
+	
 
 # Example 2: Send E-mail Attachment
 $MailSenderUPN = "xxxxx@xxxxxx.xxx"
 $SendMailWithAttachentBody = @{
 	Message = @{
-		Subject = "Did you see last night's game?"
-		Importance = "Low"
+		Subject = "HTML Test Message"
 		Body = @{
 			ContentType = "HTML"
-			Content = "They were <b>awesome</b>!"
+			Content = "This is a test <b>e-mail</b> via Microsoft Graph API!"
 		}
 		ToRecipients = @(
 			@{
@@ -81,6 +80,6 @@ $SendMailWithAttachentBody = @{
 		)
 	}
 }
-$SendMailWithAttachmentUrl = "/users/$MailSenderUPN/messages"
-$SendMailWithAttachment = Invoke-RestMethod -Uri $SendMailWithAttachmentUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailWithAttachentBody  | convertto-json) -ContentType "application/json"
+$SendMailWithAttachmentUrl = "https://graph.microsoft.com/v1.0/users/$MailSenderUPN/SendMail"
+$SendMailWithAttachment = Invoke-RestMethod -Uri $SendMailWithAttachmentUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailWithAttachentBody  | convertto-json -depth 4) -ContentType "application/json"
 
