@@ -3,7 +3,7 @@
 # Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/api/overview?view=graph-rest-1.0&preserve-view=true
 
 
-# Minimum Required API permission for execution to create a new users
+# Minimum Required API permission for execution 
 # Group.Create
 # Group.ReadWrite.All
 # GroupMember.ReadWrite.All

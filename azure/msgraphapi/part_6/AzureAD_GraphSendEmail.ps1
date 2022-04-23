@@ -3,7 +3,7 @@
 # Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/overview?view=graph-rest-1.0
 # Base64 encode/decode  https://www.base64encode.org/
 
-# Minimum Required API permission for execution to create a new users
+# Minimum Required API permission for execution
 # Mail.ReadWrite
 
 # Required Powershell Module for certificate authorisation
