@@ -58,10 +58,11 @@ $SendMail = Invoke-RestMethod -Uri $SendMailUrl -Headers @{Authorization = "Bear
 $MailSenderUPN = "xxxxx@xxxxxx.xxx"
 $SendMailWithAttachentBody = @{
 	Message = @{
-		Subject = "Meet for lunch?"
+		Subject = "Did you see last night's game?"
+		Importance = "Low"
 		Body = @{
-			ContentType = "Text"
-			Content = "The new cafeteria is open."
+			ContentType = "HTML"
+			Content = "They were <b>awesome</b>!"
 		}
 		ToRecipients = @(
 			@{
