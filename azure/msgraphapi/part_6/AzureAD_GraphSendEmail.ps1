@@ -66,7 +66,7 @@ $SendMailWithAttachentBody = @{
 		ToRecipients = @(
 			@{
 				EmailAddress = @{
-					Address = "meganb@contoso.onmicrosoft.com"
+					Address = "meganb@debontonlinedev.onmicrosoft.com"
 				}
 			}
 		)
