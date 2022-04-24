@@ -49,6 +49,7 @@ $SendMailBody = @{
             }   
 		)
 	}
+}	
 $SendMailUrl = "https://graph.microsoft.com/v1.0/users/$MailSenderUPN/SendMail"
 $SendMail = Invoke-RestMethod -Uri $SendMailUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($SendMailBody | convertto-json -depth 4) -ContentType "application/json"
 	
