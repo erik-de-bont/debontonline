@@ -1,0 +1,28 @@
+# Example file from www.debontonline.com
+# Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
+# Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/api/resources/user?view=graph-rest-1.0
+# Create Self Signed Certificate Script: https://www.powershellgallery.com/packages/ExchangeOnlineManagement/1.0.0/Content/Create-SelfSignedCertificate.ps1#:~:text=Use%20%2DForce%20option%20to%20force,and%20create%20a%20new%20certificate.&text=This%20will%20create%20a%20new,to%20protect%20the%20private%20key.
+
+# Minimum Required API permission for execution to list users
+# User.Read.All
+
+# Required Powershell Module for certificate authorisation
+# Install-Module MSAL.PS 
+
+
+# Connection information for Graph API connection - Certificate Based
+$clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
+$TenantName = "<<tenantname>>.onmicrosoft.com" # Example debontonlinedev.onmicrosoft.com
+$TenantID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" # Tenant ID 
+$CertificatePath = "Cert:\LocalMachine\my\xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Add the Certificate Path Including Thumbprint here e.g. cert:\currentuser\my\6C1EE1A11F57F2495B57A567211220E0ADD72DC1 >#
+##Import Certificate
+$Certificate = Get-Item $certificatePath
+##Request Token
+$TokenResponse = Get-MsalToken -ClientId $ClientId -TenantId $TenantId -ClientCertificate $Certificate
+$TokenAccess = $TokenResponse.accesstoken
+
+# Get all Azure AD Users via Microsoft Graph API
+$GetUsersUrl = "https://graph.microsoft.com/v1.0/users"
+$Data = Invoke-RestMethod -Uri $GetUsersUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Get 
+$Result = ($Data | select-object Value).Value
+$Users = $Result | select DisplayName,UserPrincipalName,Id
