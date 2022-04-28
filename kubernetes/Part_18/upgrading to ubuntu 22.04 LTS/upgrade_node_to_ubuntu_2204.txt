@@ -1,0 +1,58 @@
+# evict kubernetes worker before upgrade (on k8s-master)
+kubectl drain <<your node>>  --ignore-daemonsets --delete-emptydir-data
+
+# ssh to worker node
+ssh <<your node>>
+
+# check version before upgrade
+lsb_release -a
+
+
+#update gpg kubelet
+sudo curl -fsSLo /usr/share/keyrings/kubernetes-archive-keyring.gpg https://packages.cloud.google.com/apt/doc/apt-key.gpg
+echo "deb [signed-by=/usr/share/keyrings/kubernetes-archive-keyring.gpg] https://apt.kubernetes.io/ kubernetes-xenial main" | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+# Stop kubernetes
+sudo systemctl stop kubelet
+
+# upgrade to new ubuntu 22.04 LTS
+sudo apt update && sudo apt dist-upgrade -y
+sudo apt install update-manager-core 
+sudo apt autoremove
+sudo do-release-upgrade -d
+
+# /etc/sysctl.conf
+Select Y -  Install the package mantainers version
+
+# /etc/sshd_config
+Select "keep local version currently installed"
+
+# remove old kernel
+Select No to abort kernel removal (old kernel will be removed)
+
+# Reboot after upgrade is finished
+
+# restore sources list from 3rd party
+sudo rm /etc/apt/sources.list.d/docker.list
+sudo rm /etc/apt/sources.list.d/kubernetes.list
+sudo mv /etc/apt/sources.list.d/docker.list.distUpgrade /etc/apt/sources.list.d/docker.list
+sudo mv /etc/apt/sources.list.d/kubernetes.list.distUpgrade /etc/apt/sources.list.d/kubernetes.list
+sudo apt update 
+
+
+# adjust system.conf
+# look the following line "#net.ipv4.ip_forward=1" and remove the "#" to uncomment it and active it.
+sudo nano /etc/sysctl.conf
+
+# extra modules required for kubernetes
+sudo apt install linux-modules-extra-raspi 
+sudo reboot
+
+# check version after upgrade
+lsb_release -a
+
+# check if worker node is ready
+kubectl get nodes
+
+# uncordon kubernetes worker node
+kubectl uncordon <<node>>  
