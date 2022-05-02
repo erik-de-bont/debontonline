@@ -124,10 +124,10 @@ $getMember = Invoke-RestMethod -Uri $getMemberUrl -Headers @{Authorization = "Be
 $MemberId = $getMember.id
 
 $AddMemberBody = @{
-	PrincipalId = $MemberId  # The id of the user to whom you are assigning the app role.
-	ResourceId = $SPNObjectId   # The id of the resource servicePrincipal that has defined the app role.
-	AppRoleId = "00000000-0000-0000-0000-000000000000"   # The id of the appRole (defined on the resource service principal) to assign to the user.
+	principalId = $MemberId  # The id of the user to whom you are assigning the app role.
+	resourceId = $SPNObjectId   # The id of the resource servicePrincipal that has defined the app role.
+	appRoleId = "00000000-0000-0000-0000-000000000000"   # The id of the appRole (defined on the resource service principal) to assign to the user.
  }
 
 $AddMemberUrl = "https://graph.microsoft.com/v1.0/users/$MemberId/appRoleAssignments"
-$AddMember = Invoke-RestMethod -Uri $AddMemberUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $(GrantuserBody | convertto-json) -ContentType "application/json"
+$AddMember = Invoke-RestMethod -Uri $AddMemberUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($AddMemberBody | convertto-json) -ContentType "application/json"
