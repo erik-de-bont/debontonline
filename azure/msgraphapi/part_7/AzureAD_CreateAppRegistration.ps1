@@ -7,12 +7,6 @@
 # Application.ReadWrite.All
 # AppRoleAssignment.ReadWrite.All
 
-
-# Variables
-$DisplayName = "Test Application - 1" # Name of the new Enterprise Application
-
-
-
 # Connection information for Graph API connection - Certificate Based
 $clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
 $TenantName = "<<tenantname>>.onmicrosoft.com" # Example debontonlinedev.onmicrosoft.com
@@ -26,6 +20,12 @@ $TokenAccess = $TokenResponse.accesstoken
 
 
 # Example 1 - Create Enterprise Application / App Registration
+## Variables
+$DisplayName = "Test Application - 1" # Name of the new Enterprise Application
+$OwnerUPN = "owner@$tenantname"
+$MemberUPN = 
+
+
 ## Create Application Registration
 $AppRegBody  = @{
         "displayName" = $DisplayName    
@@ -99,7 +99,6 @@ $Scope = Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($To
 
 
 ## Set Owner Application
-$OwnerUPN = "owner@$tenantname"
 $getUserUrl = "https://graph.microsoft.com/v1.0/users/$OwnerUPN"
 $ProfileOwner = Invoke-RestMethod -Uri $getUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
 
@@ -118,5 +117,17 @@ $SPNOwnerUrl = "https://graph.microsoft.com/beta/servicePrincipals/$SPNObjectId/
 $SPNOwner = Invoke-RestMethod -Uri $SPNOwnerUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($OwnerBody | convertto-json) -ContentType "application/json"
 
 
-## Grant Users and/or Groups access to the Application
+## Add Member (Users and/or Groups) access to the Application
+## Get Member Id
+$getMemberUrl = "https://graph.microsoft.com/v1.0/users/$MemberUPN"
+$getMember = Invoke-RestMethod -Uri $getMemberUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
+$MemberId = $getMember.id
 
+$AddMemberBody = @{
+	PrincipalId = $MemberId  # The id of the user to whom you are assigning the app role.
+	ResourceId = $SPNObjectId   # The id of the resource servicePrincipal that has defined the app role.
+	AppRoleId = "00000000-0000-0000-0000-000000000000"   # The id of the appRole (defined on the resource service principal) to assign to the user.
+ }
+
+$AddMemberUrl = "https://graph.microsoft.com/v1.0/users/$MemberId/appRoleAssignments"
+$AddMember = Invoke-RestMethod -Uri $AddMemberUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $(GrantuserBody | convertto-json) -ContentType "application/json"
