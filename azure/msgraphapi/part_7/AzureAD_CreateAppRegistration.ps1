@@ -9,7 +9,9 @@
 
 
 # Variables
-$DisplayName = "NN - TestApp-20" # Name of the new Enterprise Application
+$DisplayName = "Test Application - 1" # Name of the new Enterprise Application
+
+
 
 # Connection information for Graph API connection - Certificate Based
 $clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
@@ -23,9 +25,8 @@ $TokenResponse = Get-MsalToken -ClientId $ClientId -TenantId $TenantId -ClientCe
 $TokenAccess = $TokenResponse.accesstoken
 
 
-#Variables
-
-# Create Application Registration
+# Example 1 - Create Enterprise Application / App Registration
+## Create Application Registration
 $AppRegBody  = @{
         "displayName" = $DisplayName    
 }
@@ -34,7 +35,7 @@ $apiAppRegUrl = "https://graph.microsoft.com/v1.0/applications"
 $App = Invoke-RestMethod -Uri $apiAppRegUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($AppRegBody | convertto-json) -ContentType "application/json"
 
 
-# Create Enterprise Application (Service PrincipalName)
+## Create Enterprise Application (Service PrincipalName)
 $SPNBody   = @{
         appId = $($app.appid)   
 }
@@ -44,7 +45,7 @@ $SPN = Invoke-RestMethod -Uri $apiSPNUrl -Headers @{Authorization = "Bearer $($T
 
 
 
-# Set API Permissions
+## Set API Permissions
 $AppObjectId = $app.id 
 
 $AppPermBody= @{ 
@@ -68,7 +69,7 @@ $APIPerm = Invoke-RestMethod -Uri $apiPermUrl -Headers @{Authorization = "Bearer
 
 
 
-# Grant Scope rights with Admin Consent Delegation Permissions
+## Grant Scope rights with Admin Consent Delegation Permissions
 <#$ScopeBody = @{
   "clientId"    = $($SPN.id)
   "consentType" = "AllPrincipals"
@@ -84,7 +85,7 @@ $Scope = Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($To
 #>
 
 
-# Grant Scope rights with Admin Consent Application Permissions
+## Grant Scope rights with Admin Consent Application Permissions
 $SPNObjectId = $SPN.id
 $ScopeBody = @{
   "principalId" =  $SPNObjectId
@@ -97,7 +98,7 @@ $apiUrl = "https://graph.microsoft.com/v1.0/servicePrincipals/$SPNObjectId/appRo
 $Scope = Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($ScopeBody | convertto-json) -ContentType "application/json"
 
 
-# Set owner application
+## Set Owner Application
 $OwnerUPN = "owner@$tenantname"
 $getUserUrl = "https://graph.microsoft.com/v1.0/users/$OwnerUPN"
 $ProfileOwner = Invoke-RestMethod -Uri $getUserUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
@@ -117,4 +118,5 @@ $SPNOwnerUrl = "https://graph.microsoft.com/beta/servicePrincipals/$SPNObjectId/
 $SPNOwner = Invoke-RestMethod -Uri $SPNOwnerUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($OwnerBody | convertto-json) -ContentType "application/json"
 
 
+## Grant Users and/or Groups access to the Application
 
