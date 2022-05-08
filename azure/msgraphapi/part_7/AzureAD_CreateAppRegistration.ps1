@@ -1,7 +1,7 @@
 # Example file from www.debontonline.com 
 # Setup Microsoft 365 environment https://developer.microsoft.com/en-us/microsoft-365/dev-program
 # Microsoft graph api documentation: https://docs.microsoft.com/en-us/graph/overview?view=graph-rest-1.0
-# Base64 encode/decode  https://www.base64encode.org/
+# API codes https://github.com/mjisaak/azure-active-directory/blob/master/README.md
 
 # Minimum Required API permission for execution
 # Application.ReadWrite.All
