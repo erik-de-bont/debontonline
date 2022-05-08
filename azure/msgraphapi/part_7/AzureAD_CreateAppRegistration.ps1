@@ -54,7 +54,7 @@ $AppPermBody= @{
         "resourceAppId"  = "00000003-0000-0000-c000-000000000000" # MS Graph app id.
         "resourceAccess" =   @(
                              @{
-                            "id"   = "df021288-bdef-4463-88db-98f22de89214" # User.Read.All id.
+                           "id"   = "df021288-bdef-4463-88db-98f22de89214" # User.Read.All id.
                            "type" = "Role"
                             }
                             )
@@ -77,7 +77,7 @@ $AppDelegatePermBody= @{
         "resourceAppId"  = "00000003-0000-0000-c000-000000000000" # MS Graph app id.
         "resourceAccess" =   @(
                              @{
-                            "id"   = "a154be20-db9c-4678-8ab7-66f6cc099a59" # Delegate User.Read.All id
+                           "id"   = "a154be20-db9c-4678-8ab7-66f6cc099a59" # Delegate User.Read.All id
                            "type" = "Scope"
                             }
                             )
