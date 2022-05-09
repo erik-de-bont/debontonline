@@ -24,10 +24,10 @@ $TokenAccess = $TokenResponse.accesstoken
 
 # Example 1 - Create Enterprise Application / App Registration
 ## Variables
-$DisplayName = "Test - Application" # Name of the new Enterprise Application
-$UserMemberUPN = "DiegoS@erikdebontdev.onmicrosoft.com" # UserPrincipalName of the user member of the Enterprise Application
-$OwnerUPN = "AdeleV@erikdebontdev.onmicrosoft.com" # UserPrincipalName of the owner of the Enterprise Application
-$GroupMailNickName = 'Marketing' #GroupName (MailNickName) of the Group of the groupmember of the Enterprise Application
+$DisplayName = "Test - Application 1" # Name of the new Enterprise Application
+$UserMemberUPN = "DiegoS@debontonlinedev.onmicrosoft.com" # UserPrincipalName of the user member of the Enterprise Application
+$OwnerUPN = "AdeleV@debontonlinedev.onmicrosoft.com" # UserPrincipalName of the owner of the Enterprise Application
+$GroupName = 'Marketing' #GroupName  of the Group of the groupmember of the Enterprise Application
 
 
 ## Create Application Registration
@@ -58,7 +58,7 @@ $AppPermBody= @{
         "resourceAppId"  = "00000003-0000-0000-c000-000000000000" # MS Graph app id.
         "resourceAccess" =   @(
                              @{
-                           "id"   = "df021288-bdef-4463-88db-98f22de89214" # User.Read.All id.
+                           "id"   = "df021288-bdef-4463-88db-98f22de89214" # Applicaton Read.All id.
                            "type" = "Role"
                             },
                              @{
@@ -78,6 +78,7 @@ $APIPerm = Invoke-RestMethod -Uri $apiPermUrl -Headers @{Authorization = "Bearer
 
 
 # Grant Scope Admin Consent Delegation Permissions
+$resourceID = "bdd92a66-cfce-4535-bdbc-b8b442a64d80" # ObjectId from GraphAggregatorService App
 $ScopeBody = @{
   "clientId"    = $($SPN.id)
   "consentType" = "AllPrincipals"
@@ -93,6 +94,7 @@ $Scope = Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($To
 
 ## Grant Admin Consent Application Permissions
 $SPNObjectId = $SPN.id
+$AppPermissionsRequiredId = "df021288-bdef-4463-88db-98f22de89214"  # Application User.Read.All id
 $ScopeBody = @{
   "principalId" =  $SPNObjectId
   "resourceId"  =  $ResourceID
@@ -139,7 +141,7 @@ $AddUserMember = Invoke-RestMethod -Uri $AddUserMemberUrl -Headers @{Authorizati
 
 ## Add Member (Groups) access to the Application
 ## Get Member Id Group
-$GetGroupUrl = "https://graph.microsoft.com/v1.0/groups?`$filter=mailNickname eq '$GroupMailNickName'"
+$GetGroupUrl = "https://graph.microsoft.com/v1.0/groups?`$filter=displayName eq '$GroupName'"
 $Group = Invoke-RestMethod -Uri $GetGroupUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
 $GroupMemberId = $Group.value.id
 ## Add Member Id User to Application
@@ -149,4 +151,4 @@ $AddGroupMemberBody = @{
 	appRoleId = "00000000-0000-0000-0000-000000000000"   # The id of the appRole (defined on the resource service principal) to assign to the user.
  }
 $AddGroupMemberUrl = "https://graph.microsoft.com/v1.0/groups/$GroupMemberId/appRoleAssignments"
-$AddGroupMember = Invoke-RestMethod -Uri $AddGroupMemberUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($AddGroupMemberBody | convertto-json) -ContentType "application/json"
+$AddGroupMember = Invoke-RestMethod -Uri $AddGroupMemberUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method Post -Body $($AddGroupMemberBody | convertto-json) -ContentType "application/json"
