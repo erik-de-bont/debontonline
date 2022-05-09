@@ -56,6 +56,10 @@ $AppPermBody= @{
                              @{
                            "id"   = "df021288-bdef-4463-88db-98f22de89214" # User.Read.All id.
                            "type" = "Role"
+                            },
+                             @{
+                           "id"   = "a154be20-db9c-4678-8ab7-66f6cc099a59" # Delegate User.Read.All id
+                           "type" = "Scope"
                             }
                             )
                       
@@ -69,26 +73,7 @@ $APIPerm = Invoke-RestMethod -Uri $apiPermUrl -Headers @{Authorization = "Bearer
 
 
 
-# Grant Scope rights with Admin Consent Delegation Permissions
-$AppObjectId = $app.id 
-$AppDelegatePermBody= @{ 
-   requiredResourceAccess = @( 
-        @{
-        "resourceAppId"  = "00000003-0000-0000-c000-000000000000" # MS Graph app id.
-        "resourceAccess" =   @(
-                             @{
-                           "id"   = "a154be20-db9c-4678-8ab7-66f6cc099a59" # Delegate User.Read.All id
-                           "type" = "Scope"
-                            }
-                            )
-                      
-    }    
-  )
-}
-$apiDelegatePermUrl = "https://graph.microsoft.com/v1.0/applications/$AppObjectId"
-$APIDelegatePerm = Invoke-RestMethod -Uri $apiDelegatePermUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method PATCH -Body $($AppDelegatePermBody | convertto-json -depth 4 ) -ContentType "application/json"
-
-
+# Grant Scope Admin Consent Delegation Permissions
 $ScopeBody = @{
   "clientId"    = $($SPN.id)
   "consentType" = "AllPrincipals"
@@ -102,7 +87,7 @@ $Scope = Invoke-RestMethod -Uri $apiUrl -Headers @{Authorization = "Bearer $($To
 
 
 
-## Grant Scope rights with Admin Consent Application Permissions
+## Grant Admin Consent Application Permissions
 $SPNObjectId = $SPN.id
 $ScopeBody = @{
   "principalId" =  $SPNObjectId
