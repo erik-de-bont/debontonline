@@ -6,6 +6,8 @@
 # Minimum Required API permission for execution
 # Application.ReadWrite.All
 # AppRoleAssignment.ReadWrite.All
+# Group.ReadWrite.All
+# User.ReadWrite.All
 
 # Connection information for Graph API connection - Certificate Based
 $clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
@@ -21,9 +23,10 @@ $TokenAccess = $TokenResponse.accesstoken
 
 # Example 1 - Create Enterprise Application / App Registration
 ## Variables
-$DisplayName = "Test Application - 1" # Name of the new Enterprise Application
-$OwnerUPN = "owner@$tenantname"
-$MemberUPN = 
+$DisplayName = "Test - Application" # Name of the new Enterprise Application
+$UserMemberUPN = "DiegoS@erikdebontdev.onmicrosoft.com" # UserPrincipalName of the user member of the Enterprise Application
+$OwnerUPN = "AdeleV@erikdebontdev.onmicrosoft.com" # UserPrincipalName of the owner of the Enterprise Application
+$GroupMailNickName = 'Marketing' #GroupName (MailNickName) of the Group of the groupmember of the Enterprise Application
 
 
 ## Create Application Registration
