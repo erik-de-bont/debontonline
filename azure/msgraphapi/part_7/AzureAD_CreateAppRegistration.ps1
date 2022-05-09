@@ -5,6 +5,7 @@
 
 # Minimum Required API permission for execution
 # Application.ReadWrite.All
+# Application.ReadWrite.OwnedBy,
 # AppRoleAssignment.ReadWrite.All
 # Group.ReadWrite.All
 # User.ReadWrite.All
