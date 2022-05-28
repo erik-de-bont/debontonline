@@ -138,7 +138,7 @@ spec:
           protocol: UDP
         - containerPort: 7359
           name: discovery-udp
-          protocol: TCP      
+          protocol: UDP      
         resources: {}
         stdin: true
         tty: true
