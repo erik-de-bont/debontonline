@@ -42,7 +42,7 @@ $GetTokenPolicy = Invoke-RestMethod -Uri $GetTokenPolicyUrl -Headers @{Authoriza
 
 # Example 3: Assign Tokenpolicy to Enterprise Application
 $LinkTokenPolicyId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" # Id TokenLifeTimePolicy
-$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" # ObjectId Enterprise Application (SPN) to assign policy to
+$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" # ObjectId Enterprise Application (SPN)
 $LinkTokenPolicyBody  = @{
 	"@odata.id" = "https://graph.microsoft.com/v1.0/policies/tokenLifetimePolicies/$LinkTokenPolicyId"
 }
@@ -53,7 +53,7 @@ $LinkTokenPolicy = Invoke-RestMethod -Uri $LinkTokenPolicyUrl -Headers @{Authori
 
 # Example 4: Retrieve TokenPolicy from Enterprise Application
 $GetTokenPolicyId ="xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"
-$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #AppID/ClientID application to assign policy to
+$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #ObjectId Enterprise Application (SPN)
 $GetTokenPolicyUrl = "https://graph.microsoft.com/v1.0/servicePrincipals/$SPNObjectId/tokenLifetimePolicies/$DeleteTokenPolicyId/`$ref"
 $GetTokenPolicy = Invoke-RestMethod -Uri $DeleteTokenPolicyUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
 
@@ -61,21 +61,21 @@ $GetTokenPolicy = Invoke-RestMethod -Uri $DeleteTokenPolicyUrl -Headers @{Author
 
 # Example 5: UnAssign TokenPolicy from Enterprise Application
 $DeleteTokenPolicyId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"
-$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #AppID/ClientID application to assign policy to
+$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #ObjectId Enterprise Application (SPN)
 $DeleteTokenPolicyUrl = "https://graph.microsoft.com/v1.0/servicePrincipals/$SPNObjectId/tokenLifetimePolicies/$DeleteTokenPolicyId/`$ref"
 $LinkTokenPolicy = Invoke-RestMethod -Uri $DeleteTokenPolicyUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method DELETE 
 
 
 
 # Example 6: Retrieve TokenPolicy from Enterpriset Application
-$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #AppID/ClientID application to assign policy to
+$SPNObjectId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #ObjectId Enterprise Application (SPN)
 $GetTokenPolicyUrl = "https://graph.microsoft.com/v1.0/servicePrincipals/$SPNObjectId/tokenLifetimePolicies"
 $Data1 = Invoke-RestMethod -Uri $GetTokenPolicyUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method GET
 $Result1 = ($Data1 | select-object Value).Value
 $GetTokenPolicy = $Result1
 
 
-# Delete TokenLifeTimePolicy
-$DeleteTokenPolicyId = "82b4a53d-d82d-486e-b3b2-e19d84e541fb" 
+# Example 7: Delete TokenLifeTimePolicy
+$DeleteTokenPolicyId = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx"  # Id TokenLifeTimePolicy
 $DeleteTokenPolicyUrl = "https://graph.microsoft.com/v1.0/policies/tokenLifetimePolicies/$DeleteTokenPolicyId"
 $DeleteTokenPolicy = Invoke-RestMethod -Uri $DeleteTokenPolicyUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method DELETE 
