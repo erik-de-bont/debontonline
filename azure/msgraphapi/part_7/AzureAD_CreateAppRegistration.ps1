@@ -116,7 +116,8 @@ $OwnerBody = @{
 	"@odata.id" = "https://graph.microsoft.com/v1.0/directoryObjects/$OwnerId"
 }
 
-$appobjectId = $app.Id
+$AppObjectId = $app.Id
+$SPNObjectId = $spn.id
 
 $apiOwnerUrl = "https://graph.microsoft.com/v1.0/applications/$appObjectId/owners/`$ref"
 $Owner = Invoke-RestMethod -Uri $apiOwnerUrl -Headers @{Authorization = "Bearer $($TokenAccess)" }  -Method POST -Body $($OwnerBody | convertto-json) -ContentType "application/json"
