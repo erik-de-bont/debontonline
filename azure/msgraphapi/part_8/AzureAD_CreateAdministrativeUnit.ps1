@@ -9,6 +9,8 @@
 # Required Powershell Module for certificate authorisation
 # Install-Module MSAL.PS 
 
+# Source CSV setup with following headers
+# AUName; AUDescription; RoleGroupl RoleGroupdescription; UserQuery
 
 # Connection information for Graph API connection - Certificate Based
 $clientID = "xxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxx" #  App Id MS Graph API Connector SPN
