@@ -1,0 +1,237 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jellyfin
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-pv-nfs-config   # < name of the persisant volume ("pv") in kubenetes
+  namespace: jellyfin            # < namespace where place the pv
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Gi                   # < max. size we reserve for the pv
+  accessModes:
+    - ReadWriteMany                # < Multiple pods can write to storage 
+  persistentVolumeReclaimPolicy: Retain # < The persistent volume can reclaimed 
+  nfs:
+    path: /volume1/jellyfin        # < Name of your NFS share with subfolder
+    server: xxx.xxx.xxx.xxx        # < IP number of your NFS server
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jellyfin-pv-nfs-data
+  namespace: jellyfin
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 1Ti                   # < max. size we reserve for the pv. A bigger value than the configdata
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /volume1/data            
+    server: xxx.xxx.xxx.xxx
+    readOnly: false
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-pvc-config   # < name of the persistant volume claim ("pvc'")
+  namespace: jellyfin         # < namespace where place the pvc
+spec:
+  storageClassName: ""
+  volumeName: jellyfin-pv-nfs-config  # < the pv it will "claim" to storage. Created in the previous yaml.
+  accessModes:
+    - ReadWriteMany             # < Multiple pods can write to storage. Same value as pv
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1Gi              # < How much data can the pvc claim from pv
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: jellyfin-pvc-data
+  namespace: jellyfin
+spec:
+  storageClassName: ""
+  volumeName: jellyfin-pv-nfs-data
+  accessModes:
+    - ReadWriteMany
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 1T
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: jellyfin
+  name: jellyfin
+  namespace: jellyfin
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+    spec:
+      volumes:
+      - name: nfs-jellyfin-config
+        persistentVolumeClaim:
+          claimName: jellyfin-pvc-config
+      - name: nfs-jellyfin-data
+        persistentVolumeClaim:
+          claimName: jellyfin-pvc-data
+      # The settings below have been marked out and can be used when removing the "#"
+      # - name: device-vcsm # Only needed if you want to use your Raspberry Pi MMAL video decoding (Enabled as OpenMax H264 decode in gui settings).
+      #   hostPath:
+      #     path: /dev/vcsm 
+      # - name: device-vchiq  #Only needed if you want to use your Raspberry Pi OpenMax video encoding.
+      #   hostPath:
+      #    path: /dev/vchiq
+      # - name: device-video10  #Only needed if you want to use your Raspberry Pi V4L2 video encoding.
+      #   hostPath:
+      #     path: /dev/video10 
+      # - name: device-video11  #Only needed if you want to use your Raspberry Pi V4L2 video encoding.
+      #   hostPath:
+      #     path: /dev/video11 
+      # - name: device-video12  #Only needed if you want to use your Raspberry Pi V4L2 video encoding.
+      #   hostPath:
+      #      path: /dev/video12 
+      containers:
+      - env:
+        - name: JELLYFIN_PublishedServerUrl 
+          value: xxx.xxx.xxx.xxx # The IP number for your jellyfin server (see service config)
+        - name: PGID
+          value: "\x36\x35\x35\x34\x31" # < ASCII code for '65541'
+        - name: PUID
+          value: "\x31\x30\x34\x34" #< ACII code for '1044'
+        - name: TZ
+          value: Europe/Amsterdam
+        image: ghcr.io/linuxserver/jellyfin
+        imagePullPolicy: Always
+        name: jellyfin
+        ports:
+        - containerPort: 8096
+          name: http-tcp
+          protocol: TCP
+        - containerPort: 8920
+          name: https-tcp
+          protocol: TCP
+        - containerPort: 1900
+          name: dlna-udp
+          protocol: UDP
+        - containerPort: 7359
+          name: discovery-udp
+          protocol: UDP      
+        resources: {}
+        stdin: true
+        tty: true
+        volumeMounts:
+        - mountPath: /config
+          name: nfs-jellyfin-config
+        - mountPath: /data
+          name: nfs-jellyfin-data
+        # Below are the path to mount devices for hardware acceleration
+        # The settings below have been marked out and can be used when removing the "#"
+        # - mountPath: /dev/vcsm
+        #   name: device-vcsm
+        # - mountPath: /dev/vchiq
+        #   name: device-vchiq
+        # - mountPath: /dev/video10
+        #   name: device-video10
+        # - mountPath: /dev/video11
+        #   name: device-video11
+        # - mountPath: /dev/video12
+        #   name: device-video12
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: jellyfin-udp       # < name of the service
+  namespace: jellyfin      # < namespace where to place service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: jellyfin # # < annotation name to combine the Service IP, make sure it's same name as in the service UDP yaml
+spec:
+  selector:
+    app: jellyfin          # < reference to the deployment (connects the service with the deployment)
+  ports:
+  - port: 1900             # < port to open on the outside on the server
+    targetPort: 1900       # < targetport. port on the pod to passthrough
+    name: dlna-udp         # < reference name for the port in the deployment yaml
+    protocol: UDP
+  - port: 7359
+    targetPort: 7359
+    name: discovery-udp
+    protocol: UDP
+  type: LoadBalancer
+  loadBalancerIP: xxx.xxx.xxx.xxx # < IP to access your jellyfinserver. Should be one from the MetalLB range and the same as the UDP yaml
+  sessionAffinity: ClientIP # This is necessary for multi-replica deployments
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: jellyfin-tcp       # < name of the service
+  namespace: jellyfin      # < namespace where to place service
+  annotations:
+    metallb.universe.tf/allow-shared-ip: jellyfin # < annotation name to combine the Service IP, make sure it's same name as in the service UDP yaml
+spec:
+  selector:
+    app: jellyfin          # < reference to the deployment (connects the service with the deployment)
+  ports:
+  - port: 8096             # < port to open on the outside on the server
+    targetPort: 8096       # < targetport. port on the pod to passthrough
+    name: http-tcp         # < reference name for the port in the deployment yaml
+    protocol: TCP
+  - port: 8920
+    targetPort: 8920
+    name: https-tcp
+  type: LoadBalancer
+  loadBalancerIP: xxx.xxx.xxx.xxx # < IP to access your jellyfinserver. Should be one from the MetalLB range and the same as the TCP yaml
+  sessionAffinity: ClientIP # This is necessary for multi-replica deployments
+---  
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jellyfin          # < name of ingress entry
+  namespace: jellyfin     # < namespace where place the ingress enty
+  annotations:
+    kubernetes.io/ingress.class: "nginx"  # < use the nginx ingress controller
+#    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS" # < communicate in https with the backend (service/pod). With a "#" in front of http will be used.
+    cert-manager.io/cluster-issuer: "letsencrypt-prod" # < use letsencrypt-prod application in kubernetes to generate ssl certificate
+#    nginx.ingress.kubernetes.io/app-root:  # < the root directory here if it's different from the root directory (like /web).
+spec:
+  rules:
+  - host: jellyfin.debont.net
+    http:
+      paths:
+      - path: /
+        pathType: Prefix  # pathType no longer has a default value in v1; "Exact", "Prefix", or "ImplementationSpecific" must be specified
+        backend:
+          service:
+            name: jellyfin-tcp
+            port: 
+              name: http-tcp  # < same label as the port in the service tcp file
+  tls: # < placing a host in the TLS config will indicate a cert should be created
+  - hosts:
+    - jellyfin.mydomain.com
+    secretName: jellyfin.mydomain.com-tls # < cert-manager will store the created certificate in this secret.
+    
+    
