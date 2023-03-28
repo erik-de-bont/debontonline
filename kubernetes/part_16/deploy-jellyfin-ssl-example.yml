@@ -123,6 +123,8 @@ spec:
           value: "\x31\x30\x34\x34" #< ACII code for '1044'
         - name: TZ
           value: Europe/Amsterdam
+        securityContext:
+          privileged: true # Container must run as privileged inside of the pod, required for hardware acceleration
         image: ghcr.io/linuxserver/jellyfin
         imagePullPolicy: Always
         name: jellyfin
