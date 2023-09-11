@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: grafana-pv-nfs
+  namespace: monitoring
+spec:
+  storageClassName: ""
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    server: xxx.xxx.xxx.xxx
+    path: "/volume1/kubedata/grafana"
+    readOnly: false

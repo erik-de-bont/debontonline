@@ -1,0 +1,27 @@
+# pre-install cluster monitoring
+kubectl apply -f pv-grafana.yaml
+kubectl apply -f pv-prometheus.yaml
+
+
+#Install cluster monitoring grafana / prometheus raspberry piechart
+cd ~
+sudo apt-get update && sudo apt-get install -y build-essential golang git
+git clone https://github.com/carlosedp/cluster-monitoring.git
+cd cluster-monitoring
+# Edit the vars.jsonnet file, 
+
+make vendor && 
+make deploy
+
+# post install 
+kubectl apply -f ingress-alertmanager.yaml
+kubectl apply -f ingress-grafana.yaml
+kubectl apply -f ingress-prometheus.yaml
+
+# default login grafana
+# user: admin
+# password: admin
+
+# remove cluster monitoring
+# make teardown
+
